@@ -1,0 +1,31 @@
+{
+  "name": "clean-energy-mcp",
+  "version": "1.0.0",
+  "description": "MCP server connecting Claude to live solar/energy APIs (NREL PVWatts, NREL Solar Resource, EIA electricity rates) for real-world solar feasibility and savings estimates.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "clean-energy-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:http": "node dist/http.js",
+    "dev": "tsc --watch"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "dotenv": "^16.4.5",
+    "express": "^5.0.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "@types/node": "^22.10.2",
+    "@types/express": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

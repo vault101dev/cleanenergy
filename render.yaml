@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: clean-energy-mcp
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:http
+    healthCheckPath: /health
+    envVars:
+      - key: NREL_API_KEY
+        sync: false
+      - key: EIA_API_KEY
+        sync: false
+      - key: MCP_AUTH_TOKEN
+        generateValue: true

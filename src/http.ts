@@ -29,6 +29,21 @@ if (!AUTH_TOKEN) {
 // hosts, so we rely on the bearer-token check below for public binding.
 const app = createMcpExpressApp({ host: "0.0.0.0" });
 
+// CORS: allows this server to be called directly from a browser-based
+// frontend (e.g. the solar quote widget) on a different origin. The bearer
+// token below is the actual access control; this just permits the browser
+// to make and read the cross-origin request in the first place.
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Mcp-Session-Id, MCP-Protocol-Version");
+  if (req.method === "OPTIONS") {
+    res.sendStatus(204);
+    return;
+  }
+  next();
+});
+
 function checkAuth(req: Request, res: Response, next: NextFunction) {
   if (!AUTH_TOKEN) return next(); // no token configured — see warning above
   const header = req.headers["authorization"];

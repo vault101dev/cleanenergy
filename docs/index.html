@@ -989,13 +989,27 @@
     panel.classList.toggle('open');
   }
 
+  function normalizeServerUrl(raw) {
+    let url = raw.trim();
+    if (!url) return url;
+    // Add a protocol if the person typed just the domain
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'https://' + url;
+    }
+    // Strip a trailing slash and an accidental "/mcp" the person may have
+    // included themselves (the widget appends this itself when calling out)
+    url = url.replace(/\/+$/, '').replace(/\/mcp$/i, '');
+    return url;
+  }
+
   function saveConfigFromForm() {
-    const url = document.getElementById('cfgUrl').value.trim().replace(/\/$/, '');
+    const url = normalizeServerUrl(document.getElementById('cfgUrl').value);
     const token = document.getElementById('cfgToken').value.trim();
     if (!url || !token) {
       showErrorBanner('Enter both a server URL and an auth token before saving.');
       return;
     }
+    document.getElementById('cfgUrl').value = url; // reflect the normalized version back
     localStorage.setItem(CONFIG_KEY, JSON.stringify({ url, token }));
     document.getElementById('connectPanel').classList.remove('open');
     updateStatusPill();

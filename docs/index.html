@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar Estimate — Clean Energy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cell-black: #14171C;
+    --cell-blue: #1C3A5E;
+    --copper: #C97C4A;
+    --volt: #F2C94C;
+    --paper: #F7F5F0;
+    --slate: #4B5563;
+    --slate-dim: #6B7280;
+    --line: #DDD9CF;
+    --card: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--cell-black);
+    font-family: 'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: 'Roboto Mono', monospace; font-variant-numeric: tabular-nums; }
+  .display { font-family: 'Space Grotesk', sans-serif; }
+
+  a:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--copper);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Layout shell ---------- */
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+  }
+
+  /* ---------- Header ---------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 0;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+  }
+  .brand-mark {
+    width: 18px; height: 18px;
+    background: var(--cell-blue);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 6px 6px;
+    border: 1.5px solid var(--cell-black);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--slate);
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    padding: 4px 0;
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .status-pill:hover { color: var(--cell-black); }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--copper);
+  }
+  .status-dot.live { background: #4C9A6A; }
+
+  .connect-panel {
+    border-bottom: 1px solid var(--line);
+    padding: 16px 0;
+    display: none;
+  }
+  .connect-panel.open { display: block; }
+  .connect-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .connect-row label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    color: var(--slate);
+    width: 90px;
+    flex-shrink: 0;
+  }
+  .connect-row input {
+    flex: 1 1 240px;
+    min-width: 0;
+    padding: 9px 11px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12.5px;
+    border: 1.5px solid var(--cell-black);
+    border-radius: 3px;
+    background: var(--card);
+    color: var(--cell-black);
+  }
+  .connect-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .connect-actions button {
+    padding: 9px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: 'IBM Plex Sans', sans-serif;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1.5px solid var(--cell-black);
+  }
+  .connect-actions .save-btn { background: var(--cell-black); color: var(--paper); }
+  .connect-actions .save-btn:hover { background: var(--cell-blue); }
+  .connect-actions .ghost-btn { background: transparent; color: var(--cell-black); }
+  .connect-actions .ghost-btn:hover { background: var(--line); }
+  .connect-hint {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10.5px;
+    color: var(--slate-dim);
+    margin: 10px 0 0;
+  }
+
+  .data-tag {
+    display: inline-block;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+    padding: 2px 6px;
+    border-radius: 2px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+  .data-tag.sample { background: var(--line); color: var(--slate); }
+  .data-tag.live { background: #E4F2E9; color: #2F6B47; }
+
+  .error-banner {
+    display: none;
+    margin-top: 18px;
+    padding: 12px 14px;
+    border: 1.5px solid #C0392B;
+    border-radius: 3px;
+    background: #FDF1EF;
+    color: #8E2E22;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    max-width: 560px;
+  }
+  .error-banner.visible { display: block; }
+
+  /* ---------- Hero / input ---------- */
+  .hero {
+    position: relative;
+    padding: 64px 0 40px;
+    background-image:
+      linear-gradient(rgba(20, 23, 28, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20, 23, 28, 0.045) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: center top;
+  }
+  .hero-content { position: relative; padding-top: 0; }
+  .eyebrow {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--copper);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: clamp(32px, 5vw, 46px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+    max-width: 11ch;
+  }
+  .lede {
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--slate);
+    max-width: 46ch;
+    margin: 0 0 32px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    max-width: 560px;
+    flex-wrap: wrap;
+  }
+  .input-row input[type="text"] {
+    flex: 1 1 300px;
+    min-width: 0;
+    padding: 15px 16px;
+    font-size: 15px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--card);
+    border: 1.5px solid var(--cell-black);
+    border-radius: 3px;
+    color: var(--cell-black);
+  }
+  .input-row input[type="text"]::placeholder { color: var(--slate-dim); }
+
+  .btn-primary {
+    padding: 15px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--cell-black);
+    color: var(--paper);
+    border: 1.5px solid var(--cell-black);
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .btn-primary:hover { background: var(--cell-blue); }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-primary:disabled { opacity: 0.5; cursor: default; }
+
+  .size-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 18px;
+    max-width: 560px;
+  }
+  .size-row label {
+    font-size: 12px;
+    color: var(--slate);
+    white-space: nowrap;
+    font-family: 'Roboto Mono', monospace;
+  }
+  .size-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--copper);
+  }
+  .size-val {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 4.5ch;
+    text-align: right;
+  }
+
+  /* ---------- Loading state ---------- */
+  .loading-row {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12.5px;
+    color: var(--slate);
+  }
+  .loading-row.active { display: flex; }
+  .pulse {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--copper);
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  /* ---------- Results ---------- */
+  .results {
+    margin-top: 44px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .results.visible { opacity: 1; transform: translateY(0); }
+
+  .addr-line {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    color: var(--slate);
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .addr-line .lat { color: var(--slate-dim); }
+
+  /* Stat readouts */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-bottom: 32px;
+  }
+  .stat {
+    background: var(--card);
+    padding: 20px 16px;
+    position: relative;
+  }
+  .stat::before {
+    content: '';
+    position: absolute;
+    top: 8px; left: 8px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--line);
+  }
+  .stat-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    font-size: clamp(20px, 3.4vw, 28px);
+    color: var(--cell-black);
+    line-height: 1;
+  }
+  .stat-value .unit {
+    font-size: 0.5em;
+    color: var(--slate);
+    font-weight: 400;
+    margin-left: 3px;
+  }
+
+  /* Panel grid — the signature element */
+  .section-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin-bottom: 12px;
+  }
+  .panel-frame {
+    border: 2px solid var(--cell-black);
+    border-radius: 4px;
+    padding: 14px;
+    background: var(--cell-black);
+    margin-bottom: 36px;
+    position: relative;
+  }
+  .panel-frame::before, .panel-frame::after,
+  .panel-corner-tl, .panel-corner-tr {
+    content: '';
+    position: absolute;
+    width: 5px; height: 5px;
+    background: var(--slate-dim);
+    border-radius: 50%;
+  }
+  .panel-frame::before { top: 6px; left: 6px; }
+  .panel-frame::after { top: 6px; right: 6px; }
+  .panel-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 3px;
+  }
+  .cell {
+    aspect-ratio: 1.5;
+    background: var(--cell-blue);
+    border-radius: 2px;
+    position: relative;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    cursor: default;
+  }
+  .cell.lit { opacity: 1; transform: scale(1); }
+  .cell-month {
+    position: absolute;
+    top: 5px; left: 6px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    color: rgba(247,245,240,0.55);
+    text-transform: uppercase;
+  }
+  .cell-val {
+    position: absolute;
+    bottom: 5px; left: 6px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--paper);
+  }
+  .panel-caption {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding: 0 2px;
+  }
+  .panel-caption span {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10.5px;
+    color: var(--slate);
+  }
+
+  /* Savings chart */
+  .chart-card {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px 18px 14px;
+    margin-bottom: 32px;
+  }
+  .chart-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+  }
+  .chart-head .big {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    font-size: 20px;
+  }
+  .chart-head .sub {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    color: var(--slate);
+  }
+  svg.chart { display: block; width: 100%; height: auto; }
+  .chart-x-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+  .chart-x-labels span {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    color: var(--slate-dim);
+  }
+
+  /* Monthly bill comparison */
+  .bill-card {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px 18px 16px;
+    margin-bottom: 32px;
+  }
+  .bill-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .bill-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bill-input-group label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    color: var(--slate);
+    white-space: nowrap;
+  }
+  .bill-input-group input {
+    width: 84px;
+    padding: 7px 9px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px;
+    border: 1.5px solid var(--cell-black);
+    border-radius: 3px;
+    background: var(--paper);
+    color: var(--cell-black);
+  }
+  .bill-legend {
+    display: flex;
+    gap: 16px;
+  }
+  .bill-legend span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10.5px;
+    color: var(--slate);
+  }
+  .bill-legend .swatch {
+    width: 9px; height: 9px;
+    border-radius: 2px;
+  }
+  .swatch.before { background: var(--slate-dim); }
+  .swatch.after { background: var(--copper); }
+
+  .bill-chart-wrap {
+    display: flex;
+    gap: 10px;
+    height: 150px;
+  }
+  .bill-yaxis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    width: 38px;
+    flex-shrink: 0;
+    padding: 0 8px 20px 0;
+    border-right: 1px solid var(--line);
+  }
+  .bill-yaxis span {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    color: var(--slate-dim);
+    line-height: 1;
+    transform: translateY(-4px);
+  }
+  .bill-yaxis span:first-child { transform: translateY(0); }
+  .bill-chart-area {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+  .bill-gridlines {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 130px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .bill-gridlines div {
+    border-top: 1px solid var(--line);
+    height: 0;
+  }
+  .bill-chart {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    align-items: end;
+    gap: 6px;
+    height: 130px;
+    padding-top: 4px;
+  }
+  .bill-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    gap: 3px;
+  }
+  .bill-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 100%;
+    width: 100%;
+    justify-content: center;
+  }
+  .bill-bar {
+    width: 40%;
+    border-radius: 2px 2px 0 0;
+    height: 0;
+    transition: height 0.5s ease;
+  }
+  .bill-bar.before { background: var(--slate-dim); }
+  .bill-bar.after { background: var(--copper); }
+  .bill-col-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9px;
+    color: var(--slate-dim);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .bill-note {
+    margin-top: 12px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    color: var(--slate-dim);
+  }
+
+  /* Assumptions */
+  .assumptions {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: var(--slate);
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  .assumptions .row { display: flex; justify-content: space-between; gap: 12px; }
+  .assumptions .caveats {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    color: var(--slate-dim);
+  }
+  .assumptions .caveats li { margin-bottom: 4px; }
+
+  @media (max-width: 520px) {
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .panel-grid { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 1fr); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>clean-energy-mcp</span>
+    </div>
+    <button class="status-pill" id="statusPill" onclick="toggleConnectPanel()">
+      <span class="status-dot" id="statusDot" aria-hidden="true"></span>
+      <span id="statusText">Sample data — connect a server</span>
+    </button>
+  </div>
+
+  <div class="connect-panel" id="connectPanel">
+    <div class="connect-row">
+      <label for="cfgUrl">Server URL</label>
+      <input type="text" id="cfgUrl" placeholder="https://your-service.onrender.com">
+    </div>
+    <div class="connect-row">
+      <label for="cfgToken">Auth token</label>
+      <input type="password" id="cfgToken" placeholder="MCP_AUTH_TOKEN">
+    </div>
+    <div class="connect-actions">
+      <button class="save-btn" onclick="saveConfigFromForm()">Save &amp; connect</button>
+      <button class="ghost-btn" onclick="clearConfigAndRefresh()">Disconnect</button>
+    </div>
+    <p class="connect-hint">Stored only in this browser (localStorage) — never written into this file or sent anywhere except the server URL above.</p>
+  </div>
+
+  <div class="hero">
+    <div class="hero-content">
+      <p class="eyebrow">Solar estimator</p>
+      <h1>See what your roof could do.</h1>
+      <p class="lede">Enter an address for a real production and savings estimate, calculated live from NREL and EIA data — not a rough guess.</p>
+
+      <div class="input-row">
+        <input type="text" id="address" placeholder="1600 Pennsylvania Ave NW, Washington, DC" value="1600 Pennsylvania Ave NW, Washington, DC">
+        <button class="btn-primary" id="submitBtn" onclick="runEstimate()">Get my estimate</button>
+      </div>
+
+      <div class="size-row">
+        <label for="sizeSlider">System size</label>
+        <input type="range" id="sizeSlider" min="4" max="10" step="0.5" value="6" oninput="updateSizeLabel()">
+        <span class="size-val mono" id="sizeVal">6.0 kW</span>
+      </div>
+
+      <div class="size-row">
+        <label for="billInput">Avg. monthly bill</label>
+        <input type="text" id="billInput" inputmode="decimal" placeholder="e.g. 180" value="180" oninput="onBillInputChange()" style="width:90px; padding:8px 10px; font-family:'Roboto Mono',monospace; font-size:13px; border:1.5px solid var(--cell-black); border-radius:3px; background:var(--card); color:var(--cell-black);">
+        <span style="font-family:'Roboto Mono',monospace; font-size:11px; color:var(--slate-dim);">optional — enables the before/after chart below</span>
+      </div>
+
+      <div class="loading-row" id="loadingRow">
+        <span class="pulse" aria-hidden="true"></span>
+        <span id="loadingText">Pulling live data from NREL + EIA…</span>
+      </div>
+
+      <div class="error-banner" id="errorBanner"></div>
+    </div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="addr-line" id="addrLine">
+      1600 PENNSYLVANIA AVE NW, WASHINGTON, DC, 20500 &nbsp;·&nbsp; <span class="lat">38.8987, -77.0352</span><span class="data-tag sample" id="dataTag">Sample</span>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="stat-label">Annual production</div>
+        <div class="stat-value"><span id="statProduction" class="mono">0</span><span class="unit">kWh</span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Year 1 savings</div>
+        <div class="stat-value">$<span id="statSavings" class="mono">0</span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Simple payback</div>
+        <div class="stat-value"><span id="statPayback" class="mono">0</span><span class="unit">yrs</span></div>
+      </div>
+    </div>
+
+    <p class="section-label">Monthly production (kWh)</p>
+    <div class="panel-frame">
+      <div class="panel-grid" id="panelGrid"></div>
+    </div>
+
+    <div class="bill-card">
+      <div class="bill-head">
+        <div>
+          <p class="section-label" style="margin-bottom:4px;">Monthly bill, before vs. after</p>
+          <div class="bill-legend">
+            <span><span class="swatch before" aria-hidden="true"></span>Without solar</span>
+            <span><span class="swatch after" aria-hidden="true"></span>With solar</span>
+          </div>
+        </div>
+      </div>
+      <div class="bill-chart-wrap">
+        <div class="bill-yaxis" id="billYAxis"></div>
+        <div class="bill-chart-area">
+          <div class="bill-gridlines" id="billGridlines"></div>
+          <div class="bill-chart" id="billChart"></div>
+        </div>
+      </div>
+      <p class="bill-note" id="billNote">Based on a $180/mo average bill and the value of power produced each month.</p>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="sub">25-year cumulative savings</div>
+          <div class="big mono">$<span id="chart25">0</span></div>
+        </div>
+        <div class="sub">Net gain: $<span id="netGain" class="mono">0</span></div>
+      </div>
+      <svg class="chart" id="savingsChart" viewBox="0 0 640 140" preserveAspectRatio="none"></svg>
+      <div class="chart-x-labels"><span>Year 1</span><span>Year 12</span><span>Year 25</span></div>
+    </div>
+
+    <div class="assumptions">
+      <div class="row"><span>System cost (gross)</span><span id="assumGross" class="mono">$0</span></div>
+      <div class="row"><span>Federal tax credit (30%)</span><span>&minus;<span id="assumCredit" class="mono">$0</span></span></div>
+      <div class="row"><span>Net cost</span><span id="assumNet" class="mono">$0</span></div>
+      <div class="row"><span>Electricity rate (EIA)</span><span id="assumRate" class="mono">$0.00/kWh</span></div>
+      <ul class="caveats">
+        <li>Uses NREL default system losses and a standard south-facing roof mount unless overridden.</li>
+        <li>Install cost/watt and tax credit are estimates — verify with a licensed installer.</li>
+        <li>Electricity inflation and panel degradation use simplified linear assumptions.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ---------------------------------------------------------------------
+  // DESIGN-PHASE MOCK DATA
+  // Based on the real get_solar_savings_estimate response for this exact
+  // address at 6kW (tested live against the deployed clean-energy-mcp
+  // server on 2026-07-01). Scales roughly with the size slider for now.
+  // Next step: replace this with a real fetch() call to the Render URL.
+  // ---------------------------------------------------------------------
+  const BASE = {
+    monthlyKwh: [665, 700, 796, 764, 735, 760, 808, 750, 736, 719, 600, 553],
+    annualKwh: 8586,
+    year1Savings: 2182,
+    payback: 6,
+    cumulative25: 69768,
+    netGain: 57168,
+    grossCost: 18000,
+    credit: 5400,
+    netCost: 12600,
+    rate: 0.2541,
+    baseKw: 6
+  };
+  const monthLabels = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+
+  let lastMonthly = null;
+
+  function updateSizeLabel() {
+    const val = document.getElementById('sizeSlider').value;
+    document.getElementById('sizeVal').textContent = Number(val).toFixed(1) + ' kW';
+  }
+
+  function countUp(el, target, opts = {}) {
+    const { prefix = '', duration = 700, decimals = 0 } = opts;
+    const start = performance.now();
+    function frame(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const val = target * eased;
+      el.textContent = prefix + val.toLocaleString(undefined, { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
+      if (t < 1) requestAnimationFrame(frame);
+      else el.textContent = prefix + target.toLocaleString(undefined, { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function buildPanelGrid(monthly) {
+    const grid = document.getElementById('panelGrid');
+    grid.innerHTML = '';
+    const max = Math.max(...monthly);
+    monthly.forEach((kwh, i) => {
+      const intensity = kwh / max; // 0..1
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      // Blend cell-blue toward volt yellow based on output intensity
+      const c1 = [28, 58, 94];   // cell-blue
+      const c2 = [242, 201, 76]; // volt
+      const mix = c1.map((c, idx) => Math.round(c + (c2[idx] - c) * intensity * 0.55));
+      cell.style.background = `rgb(${mix[0]}, ${mix[1]}, ${mix[2]})`;
+      cell.innerHTML = `<span class="cell-month">${monthLabels[i]}</span><span class="cell-val">${kwh}</span>`;
+      cell.title = `${monthLabels[i].toUpperCase()}: ${kwh} kWh`;
+      grid.appendChild(cell);
+      setTimeout(() => cell.classList.add('lit'), 60 * i);
+    });
+  }
+
+  function buildChart(cumulative) {
+    const svg = document.getElementById('savingsChart');
+    const w = 640, h = 140, pad = 6;
+    const max = cumulative[cumulative.length - 1];
+    const points = cumulative.map((v, i) => {
+      const x = pad + (i / (cumulative.length - 1)) * (w - pad * 2);
+      const y = h - pad - (v / max) * (h - pad * 2);
+      return [x, y];
+    });
+    const linePath = points.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    const areaPath = linePath + ` L${points[points.length-1][0].toFixed(1)},${h-pad} L${points[0][0].toFixed(1)},${h-pad} Z`;
+
+    svg.innerHTML = `
+      <defs>
+        <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#C97C4A" stop-opacity="0.22" />
+          <stop offset="100%" stop-color="#C97C4A" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      <path d="${areaPath}" fill="url(#areaFill)" />
+      <path d="${linePath}" fill="none" stroke="#C97C4A" stroke-width="2" />
+      <circle cx="${points[points.length-1][0]}" cy="${points[points.length-1][1]}" r="3.5" fill="#14171C" />
+    `;
+  }
+
+  function niceAxisMax(rawMax, targetTicks = 4) {
+    if (rawMax <= 0) return { max: 100, step: 25 };
+    const roughStep = rawMax / targetTicks;
+    const mag = Math.pow(10, Math.floor(Math.log10(roughStep)));
+    const norm = roughStep / mag;
+    let niceNorm;
+    if (norm <= 1) niceNorm = 1;
+    else if (norm <= 2) niceNorm = 2;
+    else if (norm <= 2.5) niceNorm = 2.5;
+    else if (norm <= 5) niceNorm = 5;
+    else niceNorm = 10;
+    const step = niceNorm * mag;
+    return { max: step * targetTicks, step };
+  }
+
+  function buildBillChart(monthlyKwh, rate, billAmount) {
+    const chart = document.getElementById('billChart');
+    const yAxis = document.getElementById('billYAxis');
+    const gridlines = document.getElementById('billGridlines');
+    const note = document.getElementById('billNote');
+    chart.innerHTML = '';
+    yAxis.innerHTML = '';
+    gridlines.innerHTML = '';
+
+    const hasBill = billAmount != null && !isNaN(billAmount) && billAmount > 0;
+    const values = monthlyKwh.map(kwh => kwh * rate);
+    const before = hasBill ? billAmount : Math.max(...values) * 1.15;
+    const rawMax = Math.max(before, ...values);
+    const { max: axisMax, step } = niceAxisMax(rawMax, 4);
+
+    note.textContent = hasBill
+      ? `Based on a $${billAmount.toLocaleString()}/mo average bill and the value of power produced each month.`
+      : `Enter your average monthly bill above to see the before/after comparison — currently showing estimated bill value only.`;
+
+    // Y-axis labels + gridlines, top ($axisMax) to bottom ($0)
+    for (let i = 4; i >= 0; i--) {
+      const val = step * i;
+      const label = document.createElement('span');
+      label.textContent = '$' + val.toLocaleString();
+      yAxis.appendChild(label);
+
+      if (i > 0) {
+        const line = document.createElement('div');
+        gridlines.appendChild(line);
+      }
+    }
+    // baseline (0-line)
+    const baseline = document.createElement('div');
+    baseline.style.borderTop = '1px solid var(--slate-dim)';
+    gridlines.appendChild(baseline);
+
+    monthLabels.forEach((label, i) => {
+      const afterVal = hasBill ? Math.max(0, billAmount - values[i]) : values[i];
+      const beforeVal = hasBill ? billAmount : null;
+
+      const col = document.createElement('div');
+      col.className = 'bill-col';
+
+      const bars = document.createElement('div');
+      bars.className = 'bill-bars';
+
+      if (hasBill) {
+        const barBefore = document.createElement('div');
+        barBefore.className = 'bill-bar before';
+        barBefore.title = `${label.toUpperCase()} without solar: $${beforeVal.toFixed(0)}`;
+        bars.appendChild(barBefore);
+        setTimeout(() => { barBefore.style.height = (beforeVal / axisMax * 100) + '%'; }, 30 * i);
+      }
+
+      const barAfter = document.createElement('div');
+      barAfter.className = 'bill-bar after';
+      barAfter.title = hasBill
+        ? `${label.toUpperCase()} with solar: $${afterVal.toFixed(0)}`
+        : `${label.toUpperCase()} solar value: $${afterVal.toFixed(0)}`;
+      bars.appendChild(barAfter);
+      setTimeout(() => { barAfter.style.height = (afterVal / axisMax * 100) + '%'; }, 30 * i + 15);
+
+      const lbl = document.createElement('div');
+      lbl.className = 'bill-col-label';
+      lbl.textContent = label;
+
+      col.appendChild(bars);
+      col.appendChild(lbl);
+      chart.appendChild(col);
+    });
+  }
+
+  function onBillInputChange() {
+    if (!lastMonthly) return;
+    const billVal = parseFloat(document.getElementById('billInput').value);
+    buildBillChart(lastMonthly, lastRate, isNaN(billVal) ? null : billVal);
+  }
+
+  let lastRate = BASE.rate;
+
+  // ---------------------------------------------------------------------
+  // Live server config (stored in this browser only — never in this file)
+  // ---------------------------------------------------------------------
+  const CONFIG_KEY = 'cleanEnergyMcpConfig';
+
+  function loadConfig() {
+    try {
+      const raw = localStorage.getItem(CONFIG_KEY);
+      if (!raw) return null;
+      const cfg = JSON.parse(raw);
+      if (!cfg.url || !cfg.token) return null;
+      return cfg;
+    } catch {
+      return null;
+    }
+  }
+
+  function toggleConnectPanel() {
+    const panel = document.getElementById('connectPanel');
+    const cfg = loadConfig();
+    if (cfg) {
+      document.getElementById('cfgUrl').value = cfg.url;
+      document.getElementById('cfgToken').value = cfg.token;
+    }
+    panel.classList.toggle('open');
+  }
+
+  function saveConfigFromForm() {
+    const url = document.getElementById('cfgUrl').value.trim().replace(/\/$/, '');
+    const token = document.getElementById('cfgToken').value.trim();
+    if (!url || !token) {
+      showErrorBanner('Enter both a server URL and an auth token before saving.');
+      return;
+    }
+    localStorage.setItem(CONFIG_KEY, JSON.stringify({ url, token }));
+    document.getElementById('connectPanel').classList.remove('open');
+    updateStatusPill();
+    runEstimate();
+  }
+
+  function clearConfigAndRefresh() {
+    localStorage.removeItem(CONFIG_KEY);
+    document.getElementById('cfgUrl').value = '';
+    document.getElementById('cfgToken').value = '';
+    document.getElementById('connectPanel').classList.remove('open');
+    updateStatusPill();
+    runEstimate();
+  }
+
+  function updateStatusPill() {
+    const cfg = loadConfig();
+    const dot = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    if (cfg) {
+      dot.classList.add('live');
+      text.textContent = 'Connected — ' + cfg.url.replace(/^https?:\/\//, '');
+    } else {
+      dot.classList.remove('live');
+      text.textContent = 'Sample data — connect a server';
+    }
+  }
+
+  function showErrorBanner(message) {
+    const el = document.getElementById('errorBanner');
+    el.textContent = message;
+    el.classList.add('visible');
+  }
+  function clearErrorBanner() {
+    const el = document.getElementById('errorBanner');
+    el.classList.remove('visible');
+    el.textContent = '';
+  }
+
+  // ---------------------------------------------------------------------
+  // MCP client — calls the deployed Streamable HTTP server directly
+  // ---------------------------------------------------------------------
+  function parseMcpResponse(raw) {
+    const dataLine = raw.split('\n').find(l => l.startsWith('data:'));
+    const jsonStr = dataLine ? dataLine.slice(5).trim() : raw.trim();
+    return JSON.parse(jsonStr);
+  }
+
+  async function callMcpTool(cfg, name, args) {
+    let res;
+    try {
+      res = await fetch(cfg.url + '/mcp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json, text/event-stream',
+          'Authorization': 'Bearer ' + cfg.token
+        },
+        body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method: 'tools/call', params: { name, arguments: args } })
+      });
+    } catch (networkErr) {
+      throw new Error('Could not reach the server. Check the URL and that the service is running.');
+    }
+
+    const raw = await res.text();
+    if (res.status === 401) throw new Error('Unauthorized — check your auth token.');
+    if (!res.ok) throw new Error(`Server error (HTTP ${res.status}).`);
+
+    let envelope;
+    try {
+      envelope = parseMcpResponse(raw);
+    } catch {
+      throw new Error('Unexpected response from server.');
+    }
+    if (envelope.error) throw new Error(envelope.error.message || 'MCP error.');
+
+    const result = envelope.result;
+    const textBlock = result?.content?.[0]?.text;
+    if (!textBlock) throw new Error('Unexpected response shape from server.');
+    if (result.isError) throw new Error(textBlock.replace(/^Error:\s*/, ''));
+
+    return JSON.parse(textBlock);
+  }
+
+  // ---------------------------------------------------------------------
+  // Shared renderer — used by both the live path and the sample-data path
+  // ---------------------------------------------------------------------
+  function renderResults(d) {
+    document.getElementById('addrLine').innerHTML =
+      `${d.matchedAddress} &nbsp;·&nbsp; <span class="lat">${d.lat.toFixed(4)}, ${d.lon.toFixed(4)}</span>` +
+      `<span class="data-tag ${d.isLive ? 'live' : 'sample'}" id="dataTag">${d.isLive ? 'Live' : 'Sample'}</span>`;
+
+    buildPanelGrid(d.monthly);
+    lastMonthly = d.monthly;
+    lastRate = d.rate;
+
+    const billVal = parseFloat(document.getElementById('billInput').value);
+    buildBillChart(d.monthly, d.rate, isNaN(billVal) ? null : billVal);
+
+    countUp(document.getElementById('statProduction'), d.annual);
+    countUp(document.getElementById('statSavings'), d.savings1);
+    document.getElementById('statPayback').textContent = d.payback ?? '—';
+
+    document.getElementById('chart25').textContent = d.cum25.toLocaleString();
+    document.getElementById('netGain').textContent = d.netGain.toLocaleString();
+    document.getElementById('assumGross').textContent = '$' + d.gross.toLocaleString();
+    document.getElementById('assumCredit').textContent = '$' + d.credit.toLocaleString();
+    document.getElementById('assumNet').textContent = '$' + d.net.toLocaleString();
+    document.getElementById('assumRate').textContent = '$' + d.rate.toFixed(4) + '/kWh';
+
+    buildChart(d.cumulativeSeries);
+
+    document.getElementById('results').classList.add('visible');
+  }
+
+  function buildMockCumulativeSeries(savings1, cum25) {
+    const years = 25;
+    const arr = [];
+    let running = 0;
+    for (let y = 1; y <= years; y++) {
+      running += savings1 * (1 + (y - 1) * 0.018);
+      arr.push(running);
+    }
+    return arr.map(v => v * (cum25 / running));
+  }
+
+  async function runEstimate() {
+    const btn = document.getElementById('submitBtn');
+    const loadingRow = document.getElementById('loadingRow');
+    const loadingText = document.getElementById('loadingText');
+    const results = document.getElementById('results');
+    const address = document.getElementById('address').value.trim();
+    const kw = parseFloat(document.getElementById('sizeSlider').value);
+    const cfg = loadConfig();
+
+    btn.disabled = true;
+    loadingRow.classList.add('active');
+    results.classList.remove('visible');
+    clearErrorBanner();
+
+    if (!cfg) {
+      // Sample-data path — no server configured yet
+      loadingText.textContent = 'Loading sample data…';
+      await new Promise(r => setTimeout(r, 500));
+      const scale = kw / BASE.baseKw;
+      const monthly = BASE.monthlyKwh.map(v => Math.round(v * scale));
+      renderResults({
+        matchedAddress: '1600 PENNSYLVANIA AVE NW, WASHINGTON, DC, 20500 (sample)',
+        lat: 38.89869893252, lon: -77.03518753691,
+        monthly,
+        annual: Math.round(BASE.annualKwh * scale),
+        savings1: Math.round(BASE.year1Savings * scale),
+        payback: BASE.payback,
+        cum25: Math.round(BASE.cumulative25 * scale),
+        netGain: Math.round(BASE.netGain * scale),
+        gross: Math.round(BASE.grossCost * scale),
+        credit: Math.round(BASE.credit * scale),
+        net: Math.round(BASE.netCost * scale),
+        rate: BASE.rate,
+        cumulativeSeries: buildMockCumulativeSeries(Math.round(BASE.year1Savings * scale), Math.round(BASE.cumulative25 * scale)),
+        isLive: false
+      });
+      loadingRow.classList.remove('active');
+      btn.disabled = false;
+      return;
+    }
+
+    // Live path — real calls to the deployed clean-energy-mcp server
+    loadingText.textContent = 'Contacting your server — may take up to a minute if it has been idle…';
+    try {
+      const [prod, savings] = await Promise.all([
+        callMcpTool(cfg, 'get_solar_production_estimate', { address, system_capacity_kw: kw }),
+        callMcpTool(cfg, 'get_solar_savings_estimate', { address, system_capacity_kw: kw })
+      ]);
+
+      renderResults({
+        matchedAddress: prod.location.matchedAddress || address,
+        lat: prod.location.lat,
+        lon: prod.location.lon,
+        monthly: prod.estimatedProduction.acMonthlyKwh,
+        annual: savings.production.acAnnualKwhYear1,
+        savings1: savings.financials.estimatedYear1SavingsUsd,
+        payback: savings.financials.simplePaybackYears,
+        cum25: savings.financials.cumulative25YearSavingsUsd,
+        netGain: savings.financials.netLifetimeGainUsd,
+        gross: savings.systemAssumptions.grossCostUsd,
+        credit: savings.systemAssumptions.grossCostUsd - savings.systemAssumptions.netCostAfterCreditUsd,
+        net: savings.systemAssumptions.netCostAfterCreditUsd,
+        rate: savings.electricityRate.dollarsPerKwh,
+        cumulativeSeries: savings.yearlyProjection.map(y => y.cumulativeSavingsUsd),
+        isLive: true
+      });
+    } catch (err) {
+      showErrorBanner(err.message || String(err));
+    } finally {
+      loadingRow.classList.remove('active');
+      btn.disabled = false;
+    }
+  }
+
+  // Auto-run once on load so the design is visible immediately
+  window.addEventListener('DOMContentLoaded', () => {
+    updateSizeLabel();
+    updateStatusPill();
+    runEstimate();
+  });
+</script>
+
+</body>
+</html>

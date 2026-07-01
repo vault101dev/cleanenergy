@@ -472,6 +472,15 @@
     font-size: 10px;
     color: var(--slate-dim);
   }
+  .chart-slider-row {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .chart-slider-row input[type="range"] {
+    width: 100%;
+    accent-color: var(--copper);
+  }
 
   /* Monthly bill comparison */
   .bill-card {
@@ -754,13 +763,16 @@
     <div class="chart-card">
       <div class="chart-head">
         <div>
-          <div class="sub">25-year cumulative savings</div>
+          <div class="sub">Cumulative savings through year <span id="yearLabel" class="mono">25</span></div>
           <div class="big mono">$<span id="chart25">0</span></div>
         </div>
         <div class="sub">Net gain: $<span id="netGain" class="mono">0</span></div>
       </div>
       <svg class="chart" id="savingsChart" viewBox="0 0 640 140" preserveAspectRatio="none"></svg>
       <div class="chart-x-labels"><span>Year 1</span><span>Year 12</span><span>Year 25</span></div>
+      <div class="chart-slider-row">
+        <input type="range" id="yearSlider" min="1" max="25" step="1" value="25" oninput="updateChartMarker(this.value)">
+      </div>
     </div>
 
     <div class="assumptions">
@@ -842,6 +854,9 @@
     });
   }
 
+  let lastChartPoints = null; // [{x, y, value}] per year, for the slider marker
+  let lastNetCost = 0;
+
   function buildChart(cumulative) {
     const svg = document.getElementById('savingsChart');
     const w = 640, h = 140, pad = 6;
@@ -863,8 +878,33 @@
       </defs>
       <path d="${areaPath}" fill="url(#areaFill)" />
       <path d="${linePath}" fill="none" stroke="#C97C4A" stroke-width="2" />
-      <circle cx="${points[points.length-1][0]}" cy="${points[points.length-1][1]}" r="3.5" fill="#14171C" />
+      <line id="chartMarkerLine" x1="0" y1="${pad}" x2="0" y2="${h - pad}" stroke="#DDD9CF" stroke-width="1" stroke-dasharray="3,3" />
+      <circle id="chartMarker" r="4.5" fill="#14171C" stroke="#F7F5F0" stroke-width="1.5" />
     `;
+
+    lastChartPoints = cumulative.map((v, i) => ({ x: points[i][0], y: points[i][1], value: v }));
+
+    const slider = document.getElementById('yearSlider');
+    slider.max = cumulative.length;
+    updateChartMarker(slider.value > cumulative.length ? cumulative.length : slider.value);
+  }
+
+  function updateChartMarker(year) {
+    if (!lastChartPoints) return;
+    const idx = Math.max(0, Math.min(lastChartPoints.length - 1, Math.round(year) - 1));
+    const point = lastChartPoints[idx];
+
+    const marker = document.getElementById('chartMarker');
+    const guide = document.getElementById('chartMarkerLine');
+    if (marker) { marker.setAttribute('cx', point.x.toFixed(1)); marker.setAttribute('cy', point.y.toFixed(1)); }
+    if (guide) { guide.setAttribute('x1', point.x.toFixed(1)); guide.setAttribute('x2', point.x.toFixed(1)); }
+
+    document.getElementById('yearLabel').textContent = idx + 1;
+    document.getElementById('chart25').textContent = Math.round(point.value).toLocaleString();
+    document.getElementById('netGain').textContent = Math.round(point.value - lastNetCost).toLocaleString();
+
+    const yearSlider = document.getElementById('yearSlider');
+    if (String(yearSlider.value) !== String(idx + 1)) yearSlider.value = idx + 1;
   }
 
   function niceAxisMax(rawMax, targetTicks = 4) {
@@ -1113,13 +1153,15 @@
     countUp(document.getElementById('statSavings'), d.savings1);
     document.getElementById('statPayback').textContent = d.payback ?? '—';
 
-    document.getElementById('chart25').textContent = d.cum25.toLocaleString();
-    document.getElementById('netGain').textContent = d.netGain.toLocaleString();
     document.getElementById('assumGross').textContent = '$' + d.gross.toLocaleString();
     document.getElementById('assumCredit').textContent = '$' + d.credit.toLocaleString();
     document.getElementById('assumNet').textContent = '$' + d.net.toLocaleString();
     document.getElementById('assumRate').textContent = '$' + d.rate.toFixed(4) + '/kWh';
 
+    lastNetCost = d.net;
+    const yearSlider = document.getElementById('yearSlider');
+    yearSlider.max = d.cumulativeSeries.length;
+    yearSlider.value = d.cumulativeSeries.length; // default to showing the full projection
     buildChart(d.cumulativeSeries);
 
     document.getElementById('results').classList.add('visible');

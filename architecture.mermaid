@@ -36,4 +36,6 @@ flowchart TB
     Tools --> Eia --> EIA
 
     GitHub["GitHub repo"] -->|push triggers auto-deploy| Render["Render (free web service)"]
+    GitHub -->|push auto-publishes| Pages["GitHub Pages (/docs on main)"]
     Render -.hosts.-> HttpEntry
+    Pages -.serves.-> Widget

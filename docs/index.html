@@ -3,7 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Solar Estimate — Clean Energy</title>
+<title>Solar Quote Estimator — MCP + Live Energy Data Demo</title>
+<meta name="description" content="A solar production and savings estimator powered by a custom Model Context Protocol (MCP) server — live NREL PVWatts, NREL Solar Resource, and EIA electricity rate data, no mock numbers.">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Solar Quote Estimator — MCP + Live Energy Data Demo">
+<meta property="og:description" content="A solar production and savings estimator powered by a custom Model Context Protocol (MCP) server — live NREL PVWatts, NREL Solar Resource, and EIA electricity rate data, no mock numbers.">
+<meta property="og:url" content="https://vault101dev.github.io/cleanenergy/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Solar Quote Estimator — MCP + Live Energy Data Demo">
+<meta name="twitter:description" content="Live solar production/savings estimates powered by a custom MCP server (NREL + EIA data).">
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%2314171C'/%3E%3Cpath d='M0 8h32M0 16h32M0 24h32M8 0v32M16 0v32M24 0v32' stroke='%231C3A5E' stroke-width='1.5'/%3E%3C/svg%3E">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=Roboto+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -83,74 +95,13 @@
     letter-spacing: 0.06em;
     color: var(--slate);
     text-transform: uppercase;
-    background: none;
-    border: none;
     padding: 4px 0;
-    cursor: pointer;
     font-family: 'IBM Plex Sans', sans-serif;
   }
-  .status-pill:hover { color: var(--cell-black); }
   .status-dot {
     width: 6px; height: 6px;
     border-radius: 50%;
     background: var(--copper);
-  }
-  .status-dot.live { background: #4C9A6A; }
-
-  .connect-panel {
-    border-bottom: 1px solid var(--line);
-    padding: 16px 0;
-    display: none;
-  }
-  .connect-panel.open { display: block; }
-  .connect-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-  }
-  .connect-row label {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 11px;
-    color: var(--slate);
-    width: 90px;
-    flex-shrink: 0;
-  }
-  .connect-row input {
-    flex: 1 1 240px;
-    min-width: 0;
-    padding: 9px 11px;
-    font-family: 'Roboto Mono', monospace;
-    font-size: 12.5px;
-    border: 1.5px solid var(--cell-black);
-    border-radius: 3px;
-    background: var(--card);
-    color: var(--cell-black);
-  }
-  .connect-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .connect-actions button {
-    padding: 9px 16px;
-    font-size: 12.5px;
-    font-weight: 600;
-    font-family: 'IBM Plex Sans', sans-serif;
-    border-radius: 3px;
-    cursor: pointer;
-    border: 1.5px solid var(--cell-black);
-  }
-  .connect-actions .save-btn { background: var(--cell-black); color: var(--paper); }
-  .connect-actions .save-btn:hover { background: var(--cell-blue); }
-  .connect-actions .ghost-btn { background: transparent; color: var(--cell-black); }
-  .connect-actions .ghost-btn:hover { background: var(--line); }
-  .connect-hint {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 10.5px;
-    color: var(--slate-dim);
-    margin: 10px 0 0;
   }
 
   .data-tag {
@@ -650,6 +601,44 @@
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; transition: none !important; }
   }
+
+  .page-footer {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 28px 20px 40px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .page-footer .stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .page-footer .stack span {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10.5px;
+    color: var(--slate);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 3px 8px;
+  }
+  .page-footer p {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12.5px;
+    color: var(--slate-dim);
+    line-height: 1.6;
+    margin: 0;
+    max-width: 60ch;
+  }
+  .page-footer a {
+    color: var(--copper);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .page-footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -661,26 +650,10 @@
       <span class="brand-mark" aria-hidden="true"></span>
       <span>clean-energy-mcp</span>
     </div>
-    <button class="status-pill" id="statusPill" onclick="toggleConnectPanel()">
-      <span class="status-dot" id="statusDot" aria-hidden="true"></span>
-      <span id="statusText">Sample data — connect a server</span>
-    </button>
-  </div>
-
-  <div class="connect-panel" id="connectPanel">
-    <div class="connect-row">
-      <label for="cfgUrl">Server URL</label>
-      <input type="text" id="cfgUrl" placeholder="https://your-service.onrender.com">
+    <div class="status-pill">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span>Sample data</span>
     </div>
-    <div class="connect-row">
-      <label for="cfgToken">Auth token</label>
-      <input type="password" id="cfgToken" placeholder="MCP_AUTH_TOKEN">
-    </div>
-    <div class="connect-actions">
-      <button class="save-btn" onclick="saveConfigFromForm()">Save &amp; connect</button>
-      <button class="ghost-btn" onclick="clearConfigAndRefresh()">Disconnect</button>
-    </div>
-    <p class="connect-hint">Stored only in this browser (localStorage) — never written into this file or sent anywhere except the server URL above.</p>
   </div>
 
   <div class="hero">
@@ -789,6 +762,22 @@
   </div>
 
 </div>
+
+<footer class="page-footer">
+  <div class="stack">
+    <span>TypeScript</span>
+    <span>Model Context Protocol</span>
+    <span>NREL PVWatts API</span>
+    <span>EIA API</span>
+    <span>Express</span>
+    <span>Render</span>
+    <span>GitHub Pages</span>
+  </div>
+  <p>
+    This is a live demo of a solar estimator built on a custom <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">Model Context Protocol</a> (MCP) server — the same protocol Claude uses to call external tools. The server exposes 4 tools that chain live NREL and EIA government data into real production and savings estimates. It also runs as a Claude Desktop extension.
+    <a href="https://github.com/vault101dev/cleanenergy" target="_blank" rel="noopener">View source on GitHub →</a>
+  </p>
+</footer>
 
 <script>
   // ---------------------------------------------------------------------
@@ -1002,82 +991,6 @@
 
   let lastRate = BASE.rate;
 
-  // ---------------------------------------------------------------------
-  // Live server config (stored in this browser only — never in this file)
-  // ---------------------------------------------------------------------
-  const CONFIG_KEY = 'cleanEnergyMcpConfig';
-
-  function loadConfig() {
-    try {
-      const raw = localStorage.getItem(CONFIG_KEY);
-      if (!raw) return null;
-      const cfg = JSON.parse(raw);
-      if (!cfg.url || !cfg.token) return null;
-      return cfg;
-    } catch {
-      return null;
-    }
-  }
-
-  function toggleConnectPanel() {
-    const panel = document.getElementById('connectPanel');
-    const cfg = loadConfig();
-    if (cfg) {
-      document.getElementById('cfgUrl').value = cfg.url;
-      document.getElementById('cfgToken').value = cfg.token;
-    }
-    panel.classList.toggle('open');
-  }
-
-  function normalizeServerUrl(raw) {
-    let url = raw.trim();
-    if (!url) return url;
-    // Add a protocol if the person typed just the domain
-    if (!/^https?:\/\//i.test(url)) {
-      url = 'https://' + url;
-    }
-    // Strip a trailing slash and an accidental "/mcp" the person may have
-    // included themselves (the widget appends this itself when calling out)
-    url = url.replace(/\/+$/, '').replace(/\/mcp$/i, '');
-    return url;
-  }
-
-  function saveConfigFromForm() {
-    const url = normalizeServerUrl(document.getElementById('cfgUrl').value);
-    const token = document.getElementById('cfgToken').value.trim();
-    if (!url || !token) {
-      showErrorBanner('Enter both a server URL and an auth token before saving.');
-      return;
-    }
-    document.getElementById('cfgUrl').value = url; // reflect the normalized version back
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({ url, token }));
-    document.getElementById('connectPanel').classList.remove('open');
-    updateStatusPill();
-    runEstimate();
-  }
-
-  function clearConfigAndRefresh() {
-    localStorage.removeItem(CONFIG_KEY);
-    document.getElementById('cfgUrl').value = '';
-    document.getElementById('cfgToken').value = '';
-    document.getElementById('connectPanel').classList.remove('open');
-    updateStatusPill();
-    runEstimate();
-  }
-
-  function updateStatusPill() {
-    const cfg = loadConfig();
-    const dot = document.getElementById('statusDot');
-    const text = document.getElementById('statusText');
-    if (cfg) {
-      dot.classList.add('live');
-      text.textContent = 'Connected — ' + cfg.url.replace(/^https?:\/\//, '');
-    } else {
-      dot.classList.remove('live');
-      text.textContent = 'Sample data — connect a server';
-    }
-  }
-
   function showErrorBanner(message) {
     const el = document.getElementById('errorBanner');
     el.textContent = message;
@@ -1090,57 +1003,12 @@
   }
 
   // ---------------------------------------------------------------------
-  // MCP client — calls the deployed Streamable HTTP server directly
-  // ---------------------------------------------------------------------
-  function parseMcpResponse(raw) {
-    const dataLine = raw.split('\n').find(l => l.startsWith('data:'));
-    const jsonStr = dataLine ? dataLine.slice(5).trim() : raw.trim();
-    return JSON.parse(jsonStr);
-  }
-
-  async function callMcpTool(cfg, name, args) {
-    let res;
-    try {
-      res = await fetch(cfg.url + '/mcp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json, text/event-stream',
-          'Authorization': 'Bearer ' + cfg.token
-        },
-        body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method: 'tools/call', params: { name, arguments: args } })
-      });
-    } catch (networkErr) {
-      throw new Error('Could not reach the server. Check the URL and that the service is running.');
-    }
-
-    const raw = await res.text();
-    if (res.status === 401) throw new Error('Unauthorized — check your auth token.');
-    if (!res.ok) throw new Error(`Server error (HTTP ${res.status}).`);
-
-    let envelope;
-    try {
-      envelope = parseMcpResponse(raw);
-    } catch {
-      throw new Error('Unexpected response from server.');
-    }
-    if (envelope.error) throw new Error(envelope.error.message || 'MCP error.');
-
-    const result = envelope.result;
-    const textBlock = result?.content?.[0]?.text;
-    if (!textBlock) throw new Error('Unexpected response shape from server.');
-    if (result.isError) throw new Error(textBlock.replace(/^Error:\s*/, ''));
-
-    return JSON.parse(textBlock);
-  }
-
-  // ---------------------------------------------------------------------
-  // Shared renderer — used by both the live path and the sample-data path
+  // Shared renderer
   // ---------------------------------------------------------------------
   function renderResults(d) {
     document.getElementById('addrLine').innerHTML =
       `${d.matchedAddress} &nbsp;·&nbsp; <span class="lat">${d.lat.toFixed(4)}, ${d.lon.toFixed(4)}</span>` +
-      `<span class="data-tag ${d.isLive ? 'live' : 'sample'}" id="dataTag">${d.isLive ? 'Live' : 'Sample'}</span>`;
+      `<span class="data-tag sample" id="dataTag">Sample</span>`;
 
     buildPanelGrid(d.monthly);
     lastMonthly = d.monthly;
@@ -1183,79 +1051,42 @@
     const loadingRow = document.getElementById('loadingRow');
     const loadingText = document.getElementById('loadingText');
     const results = document.getElementById('results');
-    const address = document.getElementById('address').value.trim();
     const kw = parseFloat(document.getElementById('sizeSlider').value);
-    const cfg = loadConfig();
 
     btn.disabled = true;
     loadingRow.classList.add('active');
     results.classList.remove('visible');
     clearErrorBanner();
 
-    if (!cfg) {
-      // Sample-data path — no server configured yet
-      loadingText.textContent = 'Loading sample data…';
-      await new Promise(r => setTimeout(r, 500));
-      const scale = kw / BASE.baseKw;
-      const monthly = BASE.monthlyKwh.map(v => Math.round(v * scale));
-      renderResults({
-        matchedAddress: '1600 PENNSYLVANIA AVE NW, WASHINGTON, DC, 20500 (sample)',
-        lat: 38.89869893252, lon: -77.03518753691,
-        monthly,
-        annual: Math.round(BASE.annualKwh * scale),
-        savings1: Math.round(BASE.year1Savings * scale),
-        payback: BASE.payback,
-        cum25: Math.round(BASE.cumulative25 * scale),
-        netGain: Math.round(BASE.netGain * scale),
-        gross: Math.round(BASE.grossCost * scale),
-        credit: Math.round(BASE.credit * scale),
-        net: Math.round(BASE.netCost * scale),
-        rate: BASE.rate,
-        cumulativeSeries: buildMockCumulativeSeries(Math.round(BASE.year1Savings * scale), Math.round(BASE.cumulative25 * scale)),
-        isLive: false
-      });
-      loadingRow.classList.remove('active');
-      btn.disabled = false;
-      return;
-    }
+    loadingText.textContent = 'Loading sample data…';
+    await new Promise(r => setTimeout(r, 500));
 
-    // Live path — real calls to the deployed clean-energy-mcp server
-    loadingText.textContent = 'Contacting your server — may take up to a minute if it has been idle…';
-    try {
-      const [prod, savings] = await Promise.all([
-        callMcpTool(cfg, 'get_solar_production_estimate', { address, system_capacity_kw: kw }),
-        callMcpTool(cfg, 'get_solar_savings_estimate', { address, system_capacity_kw: kw })
-      ]);
+    const scale = kw / BASE.baseKw;
+    const monthly = BASE.monthlyKwh.map(v => Math.round(v * scale));
+    renderResults({
+      matchedAddress: '1600 PENNSYLVANIA AVE NW, WASHINGTON, DC, 20500 (sample)',
+      lat: 38.89869893252, lon: -77.03518753691,
+      monthly,
+      annual: Math.round(BASE.annualKwh * scale),
+      savings1: Math.round(BASE.year1Savings * scale),
+      payback: BASE.payback,
+      cum25: Math.round(BASE.cumulative25 * scale),
+      netGain: Math.round(BASE.netGain * scale),
+      gross: Math.round(BASE.grossCost * scale),
+      credit: Math.round(BASE.credit * scale),
+      net: Math.round(BASE.netCost * scale),
+      rate: BASE.rate,
+      cumulativeSeries: buildMockCumulativeSeries(Math.round(BASE.year1Savings * scale), Math.round(BASE.cumulative25 * scale)),
+      isLive: false
+    });
 
-      renderResults({
-        matchedAddress: prod.location.matchedAddress || address,
-        lat: prod.location.lat,
-        lon: prod.location.lon,
-        monthly: prod.estimatedProduction.acMonthlyKwh,
-        annual: savings.production.acAnnualKwhYear1,
-        savings1: savings.financials.estimatedYear1SavingsUsd,
-        payback: savings.financials.simplePaybackYears,
-        cum25: savings.financials.cumulative25YearSavingsUsd,
-        netGain: savings.financials.netLifetimeGainUsd,
-        gross: savings.systemAssumptions.grossCostUsd,
-        credit: savings.systemAssumptions.grossCostUsd - savings.systemAssumptions.netCostAfterCreditUsd,
-        net: savings.systemAssumptions.netCostAfterCreditUsd,
-        rate: savings.electricityRate.dollarsPerKwh,
-        cumulativeSeries: savings.yearlyProjection.map(y => y.cumulativeSavingsUsd),
-        isLive: true
-      });
-    } catch (err) {
-      showErrorBanner(err.message || String(err));
-    } finally {
-      loadingRow.classList.remove('active');
-      btn.disabled = false;
-    }
+    loadingRow.classList.remove('active');
+    btn.disabled = false;
   }
 
   // Auto-run once on load so the design is visible immediately
   window.addEventListener('DOMContentLoaded', () => {
     updateSizeLabel();
-    updateStatusPill();
     runEstimate();
   });
 </script>
